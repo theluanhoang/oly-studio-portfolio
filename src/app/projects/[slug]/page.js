@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Header from '@/components/projects/Header';
-import HeroImage from '@/components/projects/HeroImage';
+import ProjectGallery from '@/components/projects/ProjectGallery';
 import ProjectInfo from '@/components/projects/ProjectInfo';
 import ProjectContent from '@/components/projects/ProjectContent';
 import Footer from '@/components/projects/Footer';
@@ -23,12 +23,20 @@ export default async function ProjectDetailPage({ params }) {
     notFound();
   }
 
+  // Tạo gallery images từ project data
+  // Nếu có gallery field thì dùng, nếu không thì dùng heroImage
+  const galleryImages = project.gallery && project.gallery.length > 0 
+    ? project.gallery 
+    : project.heroImage 
+      ? [project.heroImage] 
+      : [];
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] text-[#333] overflow-x-hidden">
       <Header />
       
-      {/* Hero Image */}
-      <HeroImage src={project.heroImage} alt={project.title} />
+      {/* Gallery Section */}
+      <ProjectGallery images={galleryImages} />
       
       {/* Project Info Section */}
       <ProjectInfo project={project} />
