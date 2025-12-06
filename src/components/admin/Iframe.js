@@ -59,10 +59,18 @@ export const Iframe = Node.create({
     // Ensure all attributes are properly set
     const attrs = {
       ...HTMLAttributes,
+      src: HTMLAttributes.src || null,
       width: HTMLAttributes.width || '100%',
       height: HTMLAttributes.height || '400',
       frameborder: HTMLAttributes.frameborder || '0',
     };
+
+    // Ensure src is set
+    if (!attrs.src) {
+      console.warn('Iframe renderHTML: src is missing!', HTMLAttributes);
+    } else {
+      console.log('Iframe renderHTML: rendering iframe with src:', attrs.src);
+    }
 
     if (HTMLAttributes.allow) {
       attrs.allow = HTMLAttributes.allow;
@@ -82,13 +90,16 @@ export const Iframe = Node.create({
       attrs.allowfullscreen = '';
     }
     
-    // Remove undefined/null values
+    // Remove undefined/null values (but keep src even if it's null for now to debug)
     Object.keys(attrs).forEach(key => {
       if (attrs[key] === null || attrs[key] === undefined) {
-        delete attrs[key];
+        if (key !== 'src') {
+          delete attrs[key];
+        }
       }
     });
     
+    console.log('Iframe renderHTML: final attrs:', attrs);
     return ['iframe', attrs];
   },
 

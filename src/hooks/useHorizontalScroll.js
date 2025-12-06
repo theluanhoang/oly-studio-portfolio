@@ -1,33 +1,49 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 export function useHorizontalScroll() {
   const galleryRef = useRef(null);
   const spacerRef = useRef(null);
   const scrollIndicatorRef = useRef(null);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
+  const setupScrollEffect = useCallback(() => {
     const gallery = galleryRef.current;
     const spacer = spacerRef.current;
     const scrollIndicator = scrollIndicatorRef.current;
 
-    if (!gallery || !spacer) return;
+    if (!gallery || !spacer) {
+      return null;
+    }
 
-    // Calculate total width of gallery
-    const sections = gallery.querySelectorAll('.section');
-    const totalWidth = sections.length * 620; // 610px + 10px gap
+    function calculateTotalWidth() {
+      const sections = gallery.querySelectorAll('.section');
+      if (sections.length === 0) return 0;
+      
+      const sectionWidth = sections[0].offsetWidth || 610;
+      const gap = 10;
+      return sections.length * (sectionWidth + gap) - gap;
+    }
 
-    // Adjust spacer height based on gallery width
-    spacer.style.height = `${totalWidth}px`;
+    function updateSpacerHeight() {
+      const totalWidth = calculateTotalWidth();
+      if (totalWidth > 0) {
+        spacer.style.height = `${totalWidth}px`;
+      }
+    }
 
     let ticking = false;
 
     function updateGalleryPosition() {
-      const scrolled = window.pageYOffset;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      const scrollPercentage = scrolled / maxScroll;
+      const totalWidth = calculateTotalWidth();
+      if (totalWidth === 0) {
+        ticking = false;
+        return;
+      }
 
-      // Calculate translation
+      const scrolled = window.pageYOffset || window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercentage = maxScroll > 0 ? scrolled / maxScroll : 0;
       const maxTranslate = -(totalWidth - window.innerWidth + 100);
       const translateX = maxTranslate * scrollPercentage;
 
@@ -41,8 +57,7 @@ export function useHorizontalScroll() {
         ticking = true;
       }
 
-      // Hide scroll indicator after first scroll
-      if (!hasScrolled && window.pageYOffset > 50) {
+      if (!hasScrolled && (window.pageYOffset || window.scrollY) > 50) {
         setHasScrolled(true);
         if (scrollIndicator) {
           scrollIndicator.style.opacity = '0';
@@ -50,16 +65,65 @@ export function useHorizontalScroll() {
       }
     }
 
-    // Initial position
+    function handleResize() {
+      updateSpacerHeight();
+      updateGalleryPosition();
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateSpacerHeight();
+      updateGalleryPosition();
+    });
+
+    resizeObserver.observe(gallery);
+
+    const mutationObserver = new MutationObserver(() => {
+      updateSpacerHeight();
+      updateGalleryPosition();
+    });
+
+    mutationObserver.observe(gallery, {
+      childList: true,
+      subtree: true
+    });
+
+    updateSpacerHeight();
     updateGalleryPosition();
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
     };
   }, [hasScrolled]);
 
-  return { galleryRef, spacerRef, scrollIndicatorRef };
-}
+  useEffect(() => {
+    if (isReady) {
+      return setupScrollEffect();
+    }
+  }, [isReady, setupScrollEffect]);
 
+  const galleryCallbackRef = useCallback((node) => {
+    galleryRef.current = node;
+    if (node && spacerRef.current) {
+      setIsReady(true);
+    }
+  }, []);
+
+  const spacerCallbackRef = useCallback((node) => {
+    spacerRef.current = node;
+    if (node && galleryRef.current) {
+      setIsReady(true);
+    }
+  }, []);
+
+  return {
+    galleryRef: galleryCallbackRef,
+    spacerRef: spacerCallbackRef,
+    scrollIndicatorRef
+  };
+}

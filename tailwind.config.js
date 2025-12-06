@@ -7,6 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        dark: '#221F1F',
+      },
       screens: {
         'sm': '640px',   // Mobile landscape
         'md': '768px',   // Tablet

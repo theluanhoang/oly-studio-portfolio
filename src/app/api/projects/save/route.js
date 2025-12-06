@@ -1,62 +1,72 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { prisma } from '@/lib/prisma';
+import { projectSchema } from '@/lib/validations/projectSchema';
 
 export async function POST(request) {
   try {
     const projectData = await request.json();
     
-    // Validate required fields
-    if (!projectData.slug || !projectData.title || !projectData.heroImage) {
+    if (!projectData.slug || !projectData.title) {
       return Response.json(
-        { error: 'Missing required fields: slug, title, heroImage' },
+        { error: 'Missing required fields: slug, title' },
         { status: 400 }
       );
     }
 
-    // Path to projects.json file
-    const filePath = path.join(process.cwd(), 'src', 'data', 'projects.json');
-    
-    // Read current file
-    const fileContent = await fs.readFile(filePath, 'utf8');
-    
-    // Parse JSON
-    let projects;
-    try {
-      projects = JSON.parse(fileContent);
-    } catch (parseError) {
+    const validationResult = projectSchema.safeParse(projectData);
+    if (!validationResult.success) {
       return Response.json(
-        { error: 'Invalid JSON file', details: parseError.message },
-        { status: 500 }
-      );
-    }
-    
-    // Check if slug already exists
-    if (projects.some((project) => project.slug === projectData.slug)) {
-      return Response.json(
-        { error: `Project with slug "${projectData.slug}" already exists` },
+        { 
+          error: 'Validation failed', 
+          details: validationResult.error.errors 
+        },
         { status: 400 }
       );
     }
-    
-    // Add new project to array
-    projects.push(projectData);
-    
-    // Write back to file with pretty formatting (2 spaces indentation)
-    const newFileContent = JSON.stringify(projects, null, 2);
-    await fs.writeFile(filePath, newFileContent, 'utf8');
+
+    const existingProject = await prisma.project.findUnique({
+      where: { slug: projectData.slug },
+    });
+
+    if (existingProject) {
+      return Response.json(
+        { error: `Project with slug "${projectData.slug}" already exists` },
+        { status: 409 }
+      );
+    }
+
+    const project = await prisma.project.create({
+      data: {
+        slug: projectData.slug,
+        title: projectData.title,
+        category: projectData.category || '',
+        location: projectData.location || '',
+        area: projectData.area || '',
+        year: projectData.year || '',
+        heroImage: projectData.heroImage || '',
+        content: projectData.content || '',
+        gallery: projectData.gallery || [],
+      },
+    });
     
     return Response.json({ 
       success: true, 
       message: 'Project saved successfully',
-      project: projectData 
-    });
+      project 
+    }, { status: 201 });
     
   } catch (error) {
     console.error('Error saving project:', error);
+    
+    if (error.code === 'P2002') {
+      return Response.json(
+        { error: 'Project with this slug already exists' },
+        { status: 409 }
+      );
+    }
+    
     return Response.json(
       { error: 'Failed to save project', details: error.message },
       { status: 500 }
     );
   }
 }
-

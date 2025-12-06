@@ -4,27 +4,24 @@ import ProjectGallery from '@/components/projects/ProjectGallery';
 import ProjectInfo from '@/components/projects/ProjectInfo';
 import ProjectContent from '@/components/projects/ProjectContent';
 import Footer from '@/components/projects/Footer';
-import { getProjectBySlug } from '@/data/projects';
+import { getProjectBySlug, getAllProjectSlugs } from '@/data/projects';
 
 export async function generateStaticParams() {
-  const { getAllProjectSlugs } = await import('@/data/projects');
-  const slugs = getAllProjectSlugs();
+  const allSlugs = await getAllProjectSlugs();
   
-  return slugs.map((slug) => ({
+  return allSlugs.map((slug) => ({
     slug,
   }));
 }
 
 export default async function ProjectDetailPage({ params }) {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug);
 
   if (!project) {
     notFound();
   }
 
-  // Tạo gallery images từ project data
-  // Nếu có gallery field thì dùng, nếu không thì dùng heroImage
   const galleryImages = project.gallery && project.gallery.length > 0 
     ? project.gallery 
     : project.heroImage 

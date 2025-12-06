@@ -1,79 +1,151 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import TiptapEditor from '@/components/admin/TiptapEditor';
+import GalleryUpload from '@/components/admin/GalleryUpload';
+import FormField from '@/components/forms/FormField';
+import { AdminHeader, PageHeader, StepIndicator } from '@/components/layout';
+import { Button } from '@/components/ui';
+import { useGalleryUpload } from '@/hooks/useGalleryUpload';
+import { projectSchema } from '@/lib/validations/projectSchema';
+import { generateSlug } from '@/lib/utils';
 
 export default function NewProjectPage() {
-  const [formData, setFormData] = useState({
-    slug: '',
-    title: '',
-    category: '',
-    location: '',
-    area: '',
-    year: '',
-    heroImage: '',
-    content: '',
-  });
+  const [currentStep, setCurrentStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const methods = useForm({
+    resolver: zodResolver(projectSchema),
+    defaultValues: {
+      title: '',
+      slug: '',
+      category: '',
+      location: '',
+      area: '',
+      year: '',
+      gallery: [],
+      content: '',
+    },
+    mode: 'onBlur',
+  });
+
+  const { handleSubmit, trigger, setValue, watch, formState: { errors } } = methods;
+  const content = watch('content');
+  const title = watch('title');
+  const slug = watch('slug');
+  const previousTitleRef = useRef('');
+
+  const gallery = useGalleryUpload({
+    onUploadSuccess: (urls) => {
+      const currentGallery = watch('gallery') || [];
+      setValue('gallery', [...currentGallery, ...urls], { shouldValidate: true });
+    },
+    onError: (error) => {
+      setSaveMessage({ type: 'error', text: error });
+    },
+  });
+
+  useEffect(() => {
+    if (title && title !== previousTitleRef.current) {
+      const generatedSlug = generateSlug(title);
+      const currentSlug = watch('slug');
+      const previousGeneratedSlug = previousTitleRef.current ? generateSlug(previousTitleRef.current) : '';
+      
+      if (!currentSlug || currentSlug === previousGeneratedSlug) {
+        setValue('slug', generatedSlug, { shouldValidate: false });
+      }
+      previousTitleRef.current = title;
+    }
+  }, [title, setValue, watch]);
+
+  const handleContentChange = (newContent) => {
+    setValue('content', newContent, { shouldValidate: false });
   };
 
-  const handleContentChange = (content) => {
-    setFormData((prev) => ({
-      ...prev,
-      content,
-    }));
+  const handleNext = async () => {
+    if (currentStep === 1) {
+      const isValid = await trigger(['title', 'slug', 'category', 'location', 'area', 'year', 'gallery']);
+      if (isValid) {
+        setCurrentStep(2);
+      }
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleBack = () => {
+    if (currentStep === 2) {
+      setCurrentStep(1);
+    }
+  };
+
+  const onSubmit = async (data) => {
     setIsSaving(true);
     setSaveMessage(null);
     
     try {
+      const galleryUrlStrings = gallery.getGalleryUrlStrings();
+      const projectData = {
+        slug: data.slug || generateSlug(data.title),
+        title: data.title,
+        category: data.category,
+        location: data.location,
+        area: data.area,
+        year: data.year,
+        heroImage: galleryUrlStrings.length > 0 && gallery.heroImageIndex < galleryUrlStrings.length 
+          ? galleryUrlStrings[gallery.heroImageIndex] 
+          : (galleryUrlStrings.length > 0 ? galleryUrlStrings[0] : ''),
+        gallery: galleryUrlStrings,
+        content: data.content || '',
+      };
+      
       const response = await fetch('/api/projects/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(projectData),
       });
       
-      const result = await response.json();
+      const contentType = response.headers.get('content-type');
+      let result;
       
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to save project');
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        throw new Error(`Server error: ${response.status} ${response.statusText}. ${text.substring(0, 200)}`);
       }
       
-      setSaveMessage({ type: 'success', text: 'Project saved successfully!' });
+      if (!response.ok) {
+        const errorMessage = result.error || 'Failed to save project';
+        const errorDetails = result.details ? `\nDetails: ${JSON.stringify(result.details, null, 2)}` : '';
+        throw new Error(`${errorMessage}${errorDetails}`);
+      }
       
-      // Reset form after successful save
-      setFormData({
-        slug: '',
+      setSaveMessage({ type: 'success', text: 'Dự án đã được lưu thành công!' });
+      
+      methods.reset({
         title: '',
+        slug: '',
         category: '',
         location: '',
         area: '',
         year: '',
-        heroImage: '',
+        gallery: [],
         content: '',
       });
+      gallery.reset();
+      setCurrentStep(1);
       
-      // Clear message after 3 seconds
       setTimeout(() => {
         setSaveMessage(null);
       }, 3000);
       
     } catch (error) {
       console.error('Error saving project:', error);
-      setSaveMessage({ type: 'error', text: error.message || 'Failed to save project' });
+      setSaveMessage({ type: 'error', text: error.message || 'Không thể lưu dự án' });
     } finally {
       setIsSaving(false);
     }
@@ -81,214 +153,152 @@ export default function NewProjectPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] text-[#333]">
-      {/* Header */}
-      <header className="bg-white/95 px-[50px] py-5 border-b border-gray-200 md:px-5 md:py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/admin/projects/new" className="text-2xl font-bold tracking-[3px] px-5 py-2 border-2 border-[#333] text-[#333] md:text-lg md:px-4 md:py-1.5">
-            OLY
-          </a>
-          <nav className="flex gap-8">
-            <a href="/projects" className="text-[#333] text-sm tracking-[2px] uppercase transition-colors hover:text-[#666] md:text-xs">
-              Projects
-            </a>
-            <a href="/admin/projects/new" className="text-[#333] text-sm tracking-[2px] uppercase transition-colors hover:text-[#666] md:text-xs">
-              Admin
-            </a>
-          </nav>
-        </div>
-      </header>
+      <AdminHeader />
 
       <div className="max-w-5xl mx-auto py-12 px-8 md:px-4">
-        <div className="mb-8">
-          <h1 className="text-4xl font-normal tracking-[3px] uppercase text-[#333] mb-2">Add New Project</h1>
-          <p className="text-sm text-[#666] tracking-[1px] uppercase">Create a new project entry</p>
-        </div>
+        <PageHeader
+          title="Tạo Dự Án Mới"
+          subtitle={`Bước ${currentStep} / 2`}
+        />
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-none border border-[#e0e0e0] p-8 md:p-6 space-y-8">
-          {/* Basic Information */}
-          <div>
-            <h2 className="text-lg font-normal tracking-[2px] uppercase text-[#333] mb-6 border-b border-[#e0e0e0] pb-2">
-              Basic Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-xs font-medium text-[#666] tracking-[1px] uppercase mb-2">
-                  Slug *
-                </label>
-                <input
-                  type="text"
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-[#e0e0e0] bg-white text-[#333] focus:outline-none focus:border-[#333] transition-colors"
-                  placeholder="narrow-house"
+        <StepIndicator currentStep={currentStep} totalSteps={2} />
+
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-none border border-[#e0e0e0] p-8 md:p-6 space-y-8">
+            {currentStep === 1 && (
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-lg font-normal tracking-[2px] uppercase text-[#333] mb-6 border-b border-[#e0e0e0] pb-2">
+                    Thông Tin Dự Án
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <FormField
+                        name="title"
+                        label="Tên dự án"
+                        placeholder="NARROW HOUSE"
+                        required
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <FormField
+                        name="slug"
+                        label="Slug"
+                        placeholder="narrow-house"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <FormField
+                        name="category"
+                        label="Thể loại"
+                        placeholder="Nhà phố"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <FormField
+                        name="location"
+                        label="Địa điểm"
+                        placeholder="TP. Hồ Chí Minh"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <FormField
+                        name="area"
+                        label="Diện tích"
+                        placeholder="58 m²"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <FormField
+                        name="year"
+                        label="Năm thực hiện"
+                        placeholder="2018"
+                        required
+                      />
+                    </div>
+                  </div>
+                  {errors.gallery && (
+                    <p className="mt-2 text-xs text-red-600" role="alert">
+                      {errors.gallery.message}
+                    </p>
+                  )}
+                </div>
+
+                <GalleryUpload
+                  galleryUrls={gallery.galleryUrls}
+                  heroImageIndex={gallery.heroImageIndex}
+                  uploading={gallery.uploading}
+                  uploadProgress={gallery.uploadProgress}
+                  isDragging={gallery.isDragging}
+                  fileInputRef={gallery.fileInputRef}
+                  onFileUpload={gallery.handleFileUpload}
+                  onDragOver={gallery.handleDragOver}
+                  onDragLeave={gallery.handleDragLeave}
+                  onDrop={gallery.handleDrop}
+                  onClick={gallery.handleClick}
+                  onRemove={(index) => {
+                    gallery.handleGalleryUrlRemove(index, (urls) => {
+                      setValue('gallery', urls, { shouldValidate: true });
+                    });
+                  }}
+                  onSetHero={gallery.handleSetHeroImage}
+                  error={errors.gallery?.message}
                 />
-              </div>
 
-              <div>
-                <label className="block text-xs font-medium text-[#666] tracking-[1px] uppercase mb-2">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-[#e0e0e0] bg-white text-[#333] focus:outline-none focus:border-[#333] transition-colors"
-                  placeholder="NARROW HOUSE"
-                />
+                <div className="flex justify-end pt-4 border-t border-[#e0e0e0]">
+                  <Button type="button" onClick={handleNext}>
+                    Tiếp Theo →
+                  </Button>
+                </div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-xs font-medium text-[#666] tracking-[1px] uppercase mb-2">
-                  Category *
-                </label>
-                <input
-                  type="text"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-[#e0e0e0] bg-white text-[#333] focus:outline-none focus:border-[#333] transition-colors"
-                  placeholder="Nhà phố"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-[#666] tracking-[1px] uppercase mb-2">
-                  Location *
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-[#e0e0e0] bg-white text-[#333] focus:outline-none focus:border-[#333] transition-colors"
-                  placeholder="TP. Hồ Chí Minh"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-[#666] tracking-[1px] uppercase mb-2">
-                  Area *
-                </label>
-                <input
-                  type="text"
-                  name="area"
-                  value={formData.area}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-[#e0e0e0] bg-white text-[#333] focus:outline-none focus:border-[#333] transition-colors"
-                  placeholder="58 m²"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-[#666] tracking-[1px] uppercase mb-2">
-                  Year *
-                </label>
-                <input
-                  type="text"
-                  name="year"
-                  value={formData.year}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-[#e0e0e0] bg-white text-[#333] focus:outline-none focus:border-[#333] transition-colors"
-                  placeholder="2018"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Hero Image */}
-          <div>
-            <h2 className="text-lg font-normal tracking-[2px] uppercase text-[#333] mb-6 border-b border-[#e0e0e0] pb-2">
-              Hero Image
-            </h2>
-            <div>
-              <label className="block text-xs font-medium text-[#666] tracking-[1px] uppercase mb-2">
-                Thumbnail URL *
-              </label>
-              <input
-                type="url"
-                name="heroImage"
-                value={formData.heroImage}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 border border-[#e0e0e0] bg-white text-[#333] focus:outline-none focus:border-[#333] transition-colors"
-                placeholder="https://images.unsplash.com/..."
-              />
-              {formData.heroImage && (
-                <div className="mt-4 border border-[#e0e0e0] p-2">
-                  <img
-                    src={formData.heroImage}
-                    alt="Preview"
-                    className="w-full h-auto object-cover"
-                    onError={(e) => {
-                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23e0e0e0" width="400" height="300"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImage not found%3C/text%3E%3C/svg%3E';
-                    }}
+            {currentStep === 2 && (
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-lg font-normal tracking-[2px] uppercase text-[#333] mb-6 border-b border-[#e0e0e0] pb-2">
+                    Nội Dung Bài Viết
+                  </h2>
+                  <TiptapEditor
+                    content={content || ''}
+                    onChange={handleContentChange}
                   />
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Content Editor */}
-          <div>
-            <h2 className="text-lg font-normal tracking-[2px] uppercase text-[#333] mb-6 border-b border-[#e0e0e0] pb-2">
-              Content
-            </h2>
-            <TiptapEditor
-              content={formData.content}
-              onChange={handleContentChange}
-            />
-          </div>
+                <div className="flex gap-4 pt-4 border-t border-[#e0e0e0]">
+                  <Button type="button" variant="secondary" onClick={handleBack}>
+                    ← Quay Lại
+                  </Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? 'Đang lưu...' : 'Lưu Dự Án'}
+                  </Button>
+                </div>
+              </div>
+            )}
 
-          {/* Save Message */}
-          {saveMessage && (
-            <div
-              className={`px-4 py-3 rounded-none border-2 ${
-                saveMessage.type === 'success'
-                  ? 'bg-green-50 border-green-500 text-green-700'
-                  : 'bg-red-50 border-red-500 text-red-700'
-              }`}
-            >
-              {saveMessage.text}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <div className="flex gap-4 pt-4 border-t border-[#e0e0e0]">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className={`px-8 py-3 bg-[#333] text-white text-sm tracking-[2px] uppercase transition-colors border-2 border-[#333] ${
-                isSaving
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:bg-black'
-              }`}
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                console.log('Project Data:', formData);
-                console.log('JSON:', JSON.stringify(formData, null, 2));
-                navigator.clipboard.writeText(JSON.stringify(formData, null, 2));
-                alert('JSON copied to clipboard!');
-              }}
-              className="px-8 py-3 bg-white text-[#333] text-sm tracking-[2px] uppercase hover:bg-[#f5f5f5] transition-colors border-2 border-[#333]"
-            >
-              Export JSON
-            </button>
-          </div>
-        </form>
+            {saveMessage && (
+              <div
+                className={`px-4 py-3 rounded-none border-2 ${
+                  saveMessage.type === 'success'
+                    ? 'bg-green-50 border-green-500 text-green-700'
+                    : 'bg-red-50 border-red-500 text-red-700'
+                }`}
+              >
+                {saveMessage.text}
+              </div>
+            )}
+          </form>
+        </FormProvider>
       </div>
     </div>
   );
 }
-

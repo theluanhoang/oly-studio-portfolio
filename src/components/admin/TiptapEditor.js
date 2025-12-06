@@ -7,13 +7,68 @@ import Link from '@tiptap/extension-link';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { FontFamily } from '@tiptap/extension-font-family';
+import { Extension } from '@tiptap/core';
+import { DOMParser } from 'prosemirror-model';
+import { TextSelection } from 'prosemirror-state';
 import { Iframe } from './Iframe';
+
+// Font Size Extension
+const FontSize = Extension.create({
+  name: 'fontSize',
+
+  addOptions() {
+    return {
+      types: ['textStyle'],
+    };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: (element) => {
+              const fontSize = element.style.fontSize;
+              if (!fontSize) return null;
+              return fontSize.replace('px', '').trim();
+            },
+            renderHTML: (attributes) => {
+              if (!attributes.fontSize) {
+                return {};
+              }
+              return {
+                style: `font-size: ${attributes.fontSize}px`,
+              };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      setFontSize:
+        (fontSize) =>
+        ({ chain }) => {
+          return chain().setMark('textStyle', { fontSize: fontSize.toString() }).run();
+        },
+      unsetFontSize:
+        () =>
+        ({ chain }) => {
+          return chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run();
+        },
+    };
+  },
+});
 
 const DEFAULT_IFRAME_ATTRS = {
   width: '100%',
   height: '400',
   frameborder: '0',
-  allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+  allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
   allowfullscreen: true,
   referrerpolicy: 'strict-origin-when-cross-origin',
 };
@@ -75,27 +130,168 @@ const toYouTubeEmbedUrl = (rawUrl) => {
   }
 };
 
+// Extract all iframes from HTML and return them along with the remaining HTML
+const extractIframesFromHTML = (html) => {
+  if (!html) return { iframes: [], remainingHTML: html };
+
+  const tempContainer = document.createElement('div');
+  tempContainer.innerHTML = html;
+  const iframeElements = tempContainer.querySelectorAll('iframe');
+  
+  const iframeAttrsList = [];
+
+  iframeElements.forEach((iframeEl) => {
+    const src = iframeEl.getAttribute('src');
+    if (!src) {
+      iframeEl.remove();
+      return;
+    }
+
+    // Validate that src is a valid URL
+    let validSrc;
+    try {
+      validSrc = new URL(src);
+    } catch (e) {
+      iframeEl.remove();
+      return;
+    }
+
+    const attrs = { ...DEFAULT_IFRAME_ATTRS };
+
+    // For YouTube URLs, convert to embed format
+    // For other URLs, use as-is
+    if (validSrc.hostname.includes('youtube.com') || validSrc.hostname.includes('youtu.be')) {
+      attrs.src = toYouTubeEmbedUrl(src);
+    } else {
+      attrs.src = src;
+    }
+
+    if (!attrs.src) {
+      iframeEl.remove();
+      return;
+    }
+
+    attrs.width = iframeEl.getAttribute('width') || DEFAULT_IFRAME_ATTRS.width;
+    attrs.height = iframeEl.getAttribute('height') || DEFAULT_IFRAME_ATTRS.height;
+    attrs.frameborder = iframeEl.getAttribute('frameborder') || DEFAULT_IFRAME_ATTRS.frameborder;
+    
+    // Get allow attribute and remove 'web-share' if present (not supported)
+    let allowAttr = iframeEl.getAttribute('allow') || DEFAULT_IFRAME_ATTRS.allow;
+    if (allowAttr && allowAttr.includes('web-share')) {
+      allowAttr = allowAttr.replace(/web-share;?/g, '').trim().replace(/;+/g, ';').replace(/^;|;$/g, '');
+    }
+    attrs.allow = allowAttr || DEFAULT_IFRAME_ATTRS.allow;
+    
+    attrs.referrerpolicy = iframeEl.getAttribute('referrerpolicy') || DEFAULT_IFRAME_ATTRS.referrerpolicy;
+    attrs.allowfullscreen = iframeEl.hasAttribute('allowfullscreen');
+
+    const title = iframeEl.getAttribute('title');
+    if (title) {
+      attrs.title = title;
+    }
+
+    iframeAttrsList.push(attrs);
+    // Remove iframe from DOM
+    iframeEl.remove();
+  });
+
+  // Get remaining HTML after removing iframes
+  const remainingHTML = tempContainer.innerHTML;
+
+  return { iframes: iframeAttrsList, remainingHTML };
+};
+
 const parseIframeInput = (input) => {
   if (!input) return null;
 
   const trimmed = input.trim();
   const attrs = { ...DEFAULT_IFRAME_ATTRS };
 
-  if (trimmed.startsWith('<iframe')) {
-    const tempContainer = document.createElement('div');
-    tempContainer.innerHTML = trimmed;
-    const iframeEl = tempContainer.querySelector('iframe');
+  // Check if input contains iframe tag (case-insensitive)
+  const lowerInput = trimmed.toLowerCase();
+  if (lowerInput.includes('<iframe')) {
+    // Try to extract iframe from HTML
+    let iframeEl = null;
+    
+    // First, try parsing as HTML
+    try {
+      const tempContainer = document.createElement('div');
+      tempContainer.innerHTML = trimmed;
+      iframeEl = tempContainer.querySelector('iframe');
+    } catch (e) {
+      // If HTML parsing fails, try regex extraction as fallback
+      const iframeMatch = trimmed.match(/<iframe[^>]*>/i);
+      if (iframeMatch) {
+        // Try to extract src using regex
+        const srcMatch = trimmed.match(/src\s*=\s*["']([^"']+)["']/i);
+        if (srcMatch && srcMatch[1]) {
+          const src = srcMatch[1];
+          try {
+            const validSrc = new URL(src);
+            if (validSrc.hostname.includes('youtube.com') || validSrc.hostname.includes('youtu.be')) {
+              attrs.src = toYouTubeEmbedUrl(src);
+            } else {
+              attrs.src = src;
+            }
+            
+            // Extract other attributes using regex
+            const widthMatch = trimmed.match(/width\s*=\s*["']([^"']+)["']/i);
+            const heightMatch = trimmed.match(/height\s*=\s*["']([^"']+)["']/i);
+            
+            if (widthMatch && widthMatch[1]) attrs.width = widthMatch[1];
+            if (heightMatch && heightMatch[1]) attrs.height = heightMatch[1];
+            
+            if (attrs.src) {
+              return attrs;
+            }
+          } catch (e) {
+            return null;
+          }
+        }
+      }
+      return null;
+    }
 
     if (!iframeEl) {
       return null;
     }
 
     const src = iframeEl.getAttribute('src');
-    attrs.src = src ? toYouTubeEmbedUrl(src) : '';
-    attrs.width = DEFAULT_IFRAME_ATTRS.width;
-    attrs.height = DEFAULT_IFRAME_ATTRS.height;
+    if (!src) {
+      return null;
+    }
+
+    // Validate that src is a valid URL
+    let validSrc;
+    try {
+      validSrc = new URL(src);
+    } catch (e) {
+      return null;
+    }
+
+    // For YouTube URLs, convert to embed format
+    // For other URLs, use as-is
+    if (validSrc.hostname.includes('youtube.com') || validSrc.hostname.includes('youtu.be')) {
+      attrs.src = toYouTubeEmbedUrl(src);
+    } else {
+      attrs.src = src;
+    }
+
+    if (!attrs.src) {
+      return null;
+    }
+
+    attrs.width = iframeEl.getAttribute('width') || DEFAULT_IFRAME_ATTRS.width;
+    attrs.height = iframeEl.getAttribute('height') || DEFAULT_IFRAME_ATTRS.height;
     attrs.frameborder = iframeEl.getAttribute('frameborder') || attrs.frameborder;
-    attrs.allow = iframeEl.getAttribute('allow') || attrs.allow;
+    
+    // Get allow attribute and remove 'web-share' if present (not supported)
+    let allowAttr = iframeEl.getAttribute('allow') || DEFAULT_IFRAME_ATTRS.allow;
+    if (allowAttr && allowAttr.includes('web-share')) {
+      allowAttr = allowAttr.replace(/web-share;?/g, '').trim().replace(/;+/g, ';').replace(/^;|;$/g, '');
+    }
+    attrs.allow = allowAttr || DEFAULT_IFRAME_ATTRS.allow;
+    
     attrs.referrerpolicy = iframeEl.getAttribute('referrerpolicy') || attrs.referrerpolicy;
     attrs.allowfullscreen = iframeEl.hasAttribute('allowfullscreen');
 
@@ -104,15 +300,30 @@ const parseIframeInput = (input) => {
       attrs.title = title;
     }
 
-    if (!attrs.src) {
-      return null;
-    }
-
     return attrs;
   }
 
+  // For plain text, validate it's a URL first
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    return null;
+  }
+
+  // Validate URL format
+  try {
+    new URL(trimmed);
+  } catch (e) {
+    return null;
+  }
+
+  // For YouTube URLs, convert to embed format
+  // For other URLs, only accept YouTube for now (to avoid creating iframes from random URLs)
   const embedUrl = toYouTubeEmbedUrl(trimmed);
   if (!embedUrl) {
+    return null;
+  }
+
+  // Only create iframe for YouTube URLs when pasting plain text
+  if (!embedUrl.includes('youtube.com') && !embedUrl.includes('youtu.be')) {
     return null;
   }
 
@@ -133,6 +344,10 @@ export default function TiptapEditor({ content, onChange }) {
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
         },
+        // Disable Link extension in StarterKit to avoid duplicate with Link extension below
+        link: false,
+        // Disable clipboardTextParser to handle paste manually
+        clipboardTextParser: false,
       }),
       Image.configure({
         inline: true,
@@ -147,6 +362,7 @@ export default function TiptapEditor({ content, onChange }) {
       TextStyle,
       Color,
       FontFamily,
+      FontSize,
       Iframe,
     ],
     content: content || '',
@@ -160,27 +376,222 @@ export default function TiptapEditor({ content, onChange }) {
         const html = event.clipboardData?.getData('text/html') ?? '';
         const text = event.clipboardData?.getData('text/plain') ?? '';
 
-        const candidate = html.includes('<iframe') ? html : text;
-        const attrs = parseIframeInput(candidate);
+        // Check if content contains iframe (check both HTML and text)
+        const hasIframe = (html && html.toLowerCase().includes('<iframe')) || 
+                         (text && text.toLowerCase().includes('<iframe'));
 
-        if (!attrs || !attrs.src) {
-          return false;
+        // If HTML contains iframe, extract iframes and process remaining content
+        if (html && html.toLowerCase().includes('<iframe')) {
+          const { iframes, remainingHTML } = extractIframesFromHTML(html);
+          
+          console.log('Paste detected iframe. Extracted:', iframes.length, 'iframes');
+          console.log('Iframes data:', iframes);
+          console.log('Remaining HTML length:', remainingHTML?.length || 0);
+          
+          if (iframes.length > 0) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const { state } = view;
+            const { schema, tr } = state;
+            const iframeNodeType = schema.nodes.iframe;
+            
+            if (!iframeNodeType) {
+              console.error('Iframe node type not found in schema');
+              return false;
+            }
+            
+            try {
+              let newTr = tr;
+              
+              // Insert all iframe nodes first
+              iframes.forEach((attrs, index) => {
+                try {
+                  console.log('Creating iframe node with attrs:', attrs);
+                  console.log('Iframe src:', attrs.src);
+                  
+                  if (!attrs.src) {
+                    console.error('Iframe has no src attribute!', attrs);
+                    return;
+                  }
+                  
+                  const node = iframeNodeType.create(attrs);
+                  console.log('Iframe node created:', node);
+                  console.log('Iframe node attrs:', node.attrs);
+                  
+                  // Insert iframe node
+                  newTr = newTr.replaceSelectionWith(node);
+                  console.log('Iframe node inserted at index', index);
+                  
+                  // Add paragraph break after iframe (except for the last one)
+                  if (index < iframes.length - 1) {
+                    const paragraph = schema.nodes.paragraph.create();
+                    newTr = newTr.replaceSelectionWith(paragraph);
+                  }
+                } catch (nodeError) {
+                  console.error('Error creating/inserting iframe node at index', index, ':', nodeError);
+                  console.error('Attrs:', attrs);
+                }
+              });
+              
+              // Dispatch iframe insertion first to ensure it's rendered
+              if (iframes.length > 0) {
+                console.log('Dispatching iframe transaction');
+                view.dispatch(newTr.scrollIntoView());
+                
+                // Get updated state after iframe insertion
+                const updatedState = view.state;
+                newTr = updatedState.tr;
+                
+                // Find the iframe node in the document and calculate position after it
+                let afterIframePos = null;
+                updatedState.doc.descendants((node, pos) => {
+                  if (node.type.name === 'iframe') {
+                    afterIframePos = pos + node.nodeSize;
+                    return false; // Stop traversing
+                  }
+                });
+                
+                if (afterIframePos !== null) {
+                  console.log('Found iframe, position after it:', afterIframePos);
+                  // Set selection to position after iframe
+                  newTr = newTr.setSelection(TextSelection.create(updatedState.doc, afterIframePos));
+                  console.log('Selection set to position after iframe');
+                } else {
+                  console.warn('Could not find iframe in document');
+                }
+              }
+              
+              // Insert remaining HTML in a new transaction
+              if (remainingHTML && remainingHTML.trim()) {
+                console.log('Processing remaining HTML, length:', remainingHTML.length);
+                try {
+                  // Check selection position before inserting remaining HTML
+                  const $fromBefore = newTr.selection.$from;
+                  const $toBefore = newTr.selection.$to;
+                  console.log('Selection before remaining HTML - parent type:', $fromBefore.parent.type.name);
+                  console.log('Selection position before:', $fromBefore.pos, 'to', $toBefore.pos);
+                  
+                  // Add a paragraph break before remaining content if we have iframes
+                  if (iframes.length > 0) {
+                    const paragraph = schema.nodes.paragraph.create();
+                    newTr = newTr.replaceSelectionWith(paragraph);
+                    console.log('Paragraph inserted before remaining HTML');
+                    
+                    // Check selection position after paragraph insertion
+                    const $fromAfter = newTr.selection.$from;
+                    console.log('Selection after paragraph - parent type:', $fromAfter.parent.type.name);
+                  }
+                  
+                  const tempDiv = document.createElement('div');
+                  tempDiv.innerHTML = remainingHTML;
+                  
+                  console.log('Temp div innerHTML length:', tempDiv.innerHTML.length);
+                  console.log('Temp div has children:', tempDiv.children.length);
+                  
+                  // Get the DOMParser from the schema
+                  const domParser = DOMParser.fromSchema(schema);
+                  
+                  // Parse the HTML content
+                  const fragment = domParser.parse(tempDiv);
+                  
+                  console.log('Parsed fragment content size:', fragment.content.size);
+                  console.log('Parsed fragment child count:', fragment.content.childCount);
+                  
+                  // Insert the parsed content
+                  if (fragment.content.size > 0) {
+                    // Insert the entire fragment at once
+                    newTr = newTr.replaceSelectionWith(fragment);
+                    console.log('Remaining HTML fragment inserted');
+                  }
+                } catch (parseError) {
+                  console.error('Error parsing remaining HTML:', parseError);
+                  console.error('Parse error details:', parseError.message, parseError.stack);
+                  // If parsing fails, try to insert as plain text
+                  try {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = remainingHTML;
+                    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+                    if (textContent.trim()) {
+                      const paragraph = schema.nodes.paragraph.create(
+                        null,
+                        schema.text(textContent)
+                      );
+                      newTr = newTr.replaceSelectionWith(paragraph);
+                      console.log('Inserted remaining content as plain text');
+                    }
+                  } catch (textError) {
+                    console.error('Error inserting as plain text:', textError);
+                  }
+                }
+                
+                console.log('Dispatching remaining HTML transaction');
+                view.dispatch(newTr.scrollIntoView());
+              }
+              
+              return true;
+            } catch (error) {
+              console.error('Error processing paste with iframes:', error);
+              // Fallback: let Tiptap handle it normally
+              return false;
+            }
+          }
+        }
+        
+        // Check if text contains iframe HTML code (when HTML is not available)
+        if (text && text.trim() && text.toLowerCase().includes('<iframe')) {
+          const attrs = parseIframeInput(text);
+          if (attrs && attrs.src) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const { state } = view;
+            const { schema, tr } = state;
+            const iframeNodeType = schema.nodes.iframe;
+            
+            if (iframeNodeType) {
+              try {
+                const node = iframeNodeType.create(attrs);
+                const newTr = tr.replaceSelectionWith(node).scrollIntoView();
+                view.dispatch(newTr);
+                return true;
+              } catch (error) {
+                console.error('Error creating iframe node:', error);
+              }
+            }
+          }
+        }
+        
+        // Check if text is a valid URL (starts with http:// or https://)
+        if (text && text.trim()) {
+          const trimmed = text.trim();
+          if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+            const attrs = parseIframeInput(trimmed);
+            // Only create iframe if it's a valid YouTube URL or embed URL
+            if (attrs && attrs.src && (attrs.src.includes('youtube.com') || attrs.src.includes('youtu.be'))) {
+              event.preventDefault();
+              event.stopPropagation();
+              
+              const { state } = view;
+              const { schema, tr } = state;
+              const iframeNodeType = schema.nodes.iframe;
+              
+              if (iframeNodeType) {
+                try {
+                  const node = iframeNodeType.create(attrs);
+                  const newTr = tr.replaceSelectionWith(node).scrollIntoView();
+                  view.dispatch(newTr);
+                  return true;
+                } catch (error) {
+                  console.error('Error creating iframe node:', error);
+                }
+              }
+            }
+          }
         }
 
-        event.preventDefault();
-
-        const { state } = view;
-        const { schema, tr } = state;
-        const iframeNodeType = schema.nodes.iframe;
-
-        if (!iframeNodeType) {
-          return false;
-        }
-
-        const node = iframeNodeType.create(attrs);
-        view.dispatch(tr.replaceSelectionWith(node).scrollIntoView());
-
-        return true;
+        // Let Tiptap handle normal paste
+        return false;
       },
     },
   });
@@ -327,6 +738,32 @@ export default function TiptapEditor({ content, onChange }) {
           <option value="Courier New">Courier New</option>
           <option value="Georgia">Georgia</option>
           <option value="Verdana">Verdana</option>
+        </select>
+
+        {/* Font Size */}
+        <select
+          onChange={(e) => {
+            const fontSize = e.target.value;
+            if (fontSize === 'default') {
+              editor.chain().focus().unsetFontSize().run();
+            } else {
+              editor.chain().focus().setFontSize(parseInt(fontSize)).run();
+            }
+          }}
+          className="px-3 py-2 border border-[#e0e0e0] bg-white text-[#333] text-xs tracking-[1px] uppercase focus:outline-none focus:border-[#333] transition-colors"
+        >
+          <option value="default">Size</option>
+          <option value="10">10px</option>
+          <option value="12">12px</option>
+          <option value="14">14px</option>
+          <option value="16">16px</option>
+          <option value="18">18px</option>
+          <option value="20">20px</option>
+          <option value="24">24px</option>
+          <option value="28">28px</option>
+          <option value="32">32px</option>
+          <option value="36">36px</option>
+          <option value="48">48px</option>
         </select>
 
         {/* Text Color */}
