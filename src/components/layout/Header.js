@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 
 export default function Header() {
   return (
-    <header className="fixed top-0 left-0 w-full bg-white z-50">
+    <header className="w-full bg-white fixed top-0 left-0 right-0 z-50">
       <div className="w-full px-[50px] py-5 flex items-center justify-between md:px-5 md:py-4">
         <Link href="/" noBaseStyles className="flex items-center">
           <img

@@ -47,7 +47,7 @@ export function useHorizontalScroll() {
       const maxTranslate = -(totalWidth - window.innerWidth + 100);
       const translateX = maxTranslate * scrollPercentage;
 
-      gallery.style.transform = `translateY(-50%) translateX(${translateX}px)`;
+      gallery.style.transform = `translateX(${translateX}px)`;
       ticking = false;
     }
 

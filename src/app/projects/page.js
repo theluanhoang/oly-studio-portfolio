@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Header from '@/components/projects/Header';
 import ProjectSection from '@/components/projects/ProjectSection';
-import Footer from '@/components/projects/Footer';
 import ScrollIndicator from '@/components/projects/ScrollIndicator';
 import { LoadingSpinner } from '@/components/ui';
 import { useHorizontalScroll } from '@/hooks/useHorizontalScroll';
@@ -13,6 +11,7 @@ export default function ProjectsPage() {
   const { galleryRef, spacerRef, scrollIndicatorRef } = useHorizontalScroll();
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [headerHeight, setHeaderHeight] = useState(79);
 
   useEffect(() => {
     async function loadProjects() {
@@ -41,18 +40,48 @@ export default function ProjectsPage() {
     loadProjects();
   }, []);
 
+  useEffect(() => {
+    function updateHeaderHeight() {
+      const header = document.querySelector('header');
+      if (header) {
+        setHeaderHeight(header.offsetHeight);
+      }
+    }
+
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+    
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeaderHeight();
+    });
+    
+    const header = document.querySelector('header');
+    if (header) {
+      resizeObserver.observe(header);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateHeaderHeight);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   if (loading) {
     return <LoadingSpinner text="Đang tải..." />;
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] text-[#333] overflow-x-hidden pt-[79px]">
-      <Header />
-
-      <div className="fixed top-[79px] left-0 w-full h-[calc(100vh-79px)] overflow-hidden">
+    <div className="min-h-screen bg-[#f5f5f5] text-[#333] overflow-x-hidden">
+      <div 
+        className="fixed left-0 w-full overflow-hidden z-0"
+        style={{ 
+          top: `${headerHeight}px`,
+          height: `calc(100vh - ${headerHeight}px)`
+        }}
+      >
         <div
           ref={galleryRef}
-          className="absolute top-1/2 left-0 -translate-y-1/2 flex gap-[10px] transition-transform duration-100 ease-out will-change-transform md:px-5"
+          className="absolute top-0 left-0 flex gap-[10px] transition-transform duration-100 ease-out will-change-transform md:px-5"
         >
           {sections.map((sectionImages, sectionIndex) => (
             <ProjectSection
@@ -67,8 +96,6 @@ export default function ProjectsPage() {
       <div ref={spacerRef} className="h-[500vh]"></div>
 
       <ScrollIndicator ref={scrollIndicatorRef} />
-
-      <Footer />
     </div>
   );
 }
