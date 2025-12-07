@@ -14,7 +14,7 @@ export default function ProjectGallery({ images = [] }) {
   // Nếu chỉ có 1 ảnh, hiển thị đơn giản
   if (images.length === 1) {
     return (
-      <section className="w-full bg-[#f5f5f5]">
+      <section className="w-full bg-background">
         <div className="w-full overflow-hidden">
           <img
             src={images[0]}
@@ -88,7 +88,7 @@ export default function ProjectGallery({ images = [] }) {
   };
 
   return (
-    <section className="w-full bg-[#f5f5f5] py-8 md:py-12">
+    <section className="w-full bg-background py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
         {/* Main Image với arrows */}
         <div className="relative w-full mb-6 md:mb-8 overflow-hidden rounded-lg group">

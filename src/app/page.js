@@ -23,11 +23,11 @@ export default function Home() {
   }, [router]);
 
   return (
-    <div className="fixed inset-0 bg-dark flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 bg-background flex items-center justify-center overflow-hidden">
       <div className="relative w-full max-w-6xl mx-auto px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <div
-            className={`text-white uppercase text-sm tracking-wider transition-all duration-800 ease-out ${
+            className={`text-foreground uppercase text-sm tracking-wider transition-all duration-800 ease-out ${
               isExpanded ? 'translate-x-[-200px] opacity-0' : 'translate-x-0 opacity-100'
             }`}
             style={{ transitionDelay: '0ms' }}
@@ -35,7 +35,7 @@ export default function Home() {
             ARCHITECTURE
           </div>
           <div
-            className={`text-white uppercase text-sm tracking-wider transition-all duration-800 ease-out ${
+            className={`text-foreground uppercase text-sm tracking-wider transition-all duration-800 ease-out ${
               isExpanded ? 'translate-x-[-200px] opacity-0' : 'translate-x-0 opacity-100'
             }`}
             style={{ transitionDelay: '100ms' }}
@@ -51,13 +51,12 @@ export default function Home() {
             className={`h-auto transition-all duration-800 ${
               isExpanded ? 'scale-110 opacity-80' : 'scale-100 opacity-100'
             }`}
-            style={{ filter: 'brightness(0) invert(1)' }}
           />
         </div>
 
         <div className="flex items-center gap-8">
           <div
-            className={`text-white uppercase text-sm tracking-wider transition-all duration-800 ease-out ${
+            className={`text-foreground uppercase text-sm tracking-wider transition-all duration-800 ease-out ${
               isExpanded ? 'translate-x-[200px] opacity-0' : 'translate-x-0 opacity-100'
             }`}
             style={{ transitionDelay: '0ms' }}
@@ -65,7 +64,7 @@ export default function Home() {
             INTERIOR
           </div>
           <div
-            className={`text-white uppercase text-sm tracking-wider transition-all duration-800 ease-out ${
+            className={`text-foreground uppercase text-sm tracking-wider transition-all duration-800 ease-out ${
               isExpanded ? 'translate-x-[200px] opacity-0' : 'translate-x-0 opacity-100'
             }`}
             style={{ transitionDelay: '100ms' }}

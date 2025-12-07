@@ -5,13 +5,14 @@ import ProjectSection from '@/components/projects/ProjectSection';
 import ScrollIndicator from '@/components/projects/ScrollIndicator';
 import { LoadingSpinner } from '@/components/ui';
 import { useHorizontalScroll } from '@/hooks/useHorizontalScroll';
+import { useHeaderHeight } from '@/hooks/useHeaderHeight';
 import { groupArrayIntoChunks } from '@/lib/utils';
 
 export default function ProjectsPage() {
   const { galleryRef, spacerRef, scrollIndicatorRef } = useHorizontalScroll();
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [headerHeight, setHeaderHeight] = useState(79);
+  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     async function loadProjects() {
@@ -40,38 +41,13 @@ export default function ProjectsPage() {
     loadProjects();
   }, []);
 
-  useEffect(() => {
-    function updateHeaderHeight() {
-      const header = document.querySelector('header');
-      if (header) {
-        setHeaderHeight(header.offsetHeight);
-      }
-    }
-
-    updateHeaderHeight();
-    window.addEventListener('resize', updateHeaderHeight);
-    
-    const resizeObserver = new ResizeObserver(() => {
-      updateHeaderHeight();
-    });
-    
-    const header = document.querySelector('header');
-    if (header) {
-      resizeObserver.observe(header);
-    }
-
-    return () => {
-      window.removeEventListener('resize', updateHeaderHeight);
-      resizeObserver.disconnect();
-    };
-  }, []);
 
   if (loading) {
     return <LoadingSpinner text="Đang tải..." />;
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] text-[#333] overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <div 
         className="fixed left-0 w-full overflow-hidden z-0"
         style={{ 

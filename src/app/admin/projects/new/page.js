@@ -152,7 +152,7 @@ export default function NewProjectPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] text-[#333]">
+    <div className="min-h-screen bg-background text-foreground">
       <AdminHeader />
 
       <div className="max-w-5xl mx-auto py-12 px-8 md:px-4">

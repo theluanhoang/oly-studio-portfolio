@@ -27,7 +27,7 @@ export default async function ProjectDetailPage({ params }) {
       : [];
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] text-[#333] overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Gallery Section */}
       <ProjectGallery images={galleryImages} />
       

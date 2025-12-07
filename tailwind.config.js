@@ -9,6 +9,8 @@ module.exports = {
     extend: {
       colors: {
         dark: '#221F1F',
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
       },
       screens: {
         'sm': '640px',   // Mobile landscape
