@@ -1,52 +1,84 @@
+'use client';
+
+import { useSession, signOut } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import Link from '@/components/ui/Link';
-import { Search } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import { User } from 'lucide-react';
+import Menu from './Menu';
 
 export default function Header({ isFixed = false }) {
+  const { data: session } = useSession();
+  const pathname = usePathname();
+  const isAdminPage = pathname?.startsWith('/admin') && pathname !== '/admin/login';
+  
   const positionClasses = isFixed 
     ? "fixed top-0 left-0 right-0 z-50" 
     : "relative z-50";
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/admin/login' });
+  };
   
   return (
-    <header className={`w-full bg-background shadow-md ${positionClasses}`}>
-      <div className="w-full px-[50px] py-5 flex items-center md:px-5 md:py-4">
-        <Link href="/" noBaseStyles className="flex items-center w-1/2">
-          <img
-            src="/assets/logo.png"
-            alt="OLY Logo"
-            className="h-auto"
-          />
-        </Link>
+    <header className={`w-full bg-background shadow-md min-[468px]:pl-[30px] min-[468px]:pr-[71px] pl-4 pr-4 ${positionClasses}`}>
+      <div className="w-full h-12 flex items-center justify-between">
+        <div className="flex items-center min-[1366px]:w-1/2 w-auto">
+          <Link href={"/"} noBaseStyles className="flex items-center">
+            <img
+              src="/assets/logo.svg"
+              alt="OLY Logo"
+              className="min-[320px]:h-auto h-8"
+            />
+          </Link>
+        </div>
 
-        <div className="w-1/2 flex items-center justify-evenly">
-          <nav className="flex items-center gap-10 md:gap-4">
-            <Link href="/projects" className="text-xs font-normal md:text-[10px] text-foreground">
-              Project
-            </Link>
-            <Link href="#product" className="text-xs font-normal md:text-[10px] text-foreground">
-              Product
-            </Link>
-            <Link href="#about" className="text-xs font-normal md:text-[10px] text-foreground">
-              About
-            </Link>
-            <Link href="#contact" className="text-xs font-normal md:text-[10px] text-foreground">
-              Contact
-            </Link>
-          </nav>
+        <div className="flex items-center min-[1366px]:w-1/2 md:w-2/3 min-[468px]:w-5/6 w-auto justify-between">
+          {isAdminPage ? (
+            <nav className="flex items-center gap-8">
+              <Link href="/projects" className="text-[12px] font-normal leading-normal text-black">
+                Projects
+              </Link>
+              {session && (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#f5f5f5] border border-[#e0e0e0] rounded-sm">
+                    <User size={14} className="text-[#666]" strokeWidth={1.5} />
+                    <span className="text-[12px] font-medium leading-normal text-[#333] tracking-wide">
+                      {session.user?.name || 'Admin'}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="md:text-xs md:px-4 md:py-1.5"
+                  >
+                    Đăng Xuất
+                  </Button>
+                </div>
+              )}
+            </nav>
+          ) : (
+            <>
+              <Menu className="flex items-center sm:gap-15 min-[468px]:gap-7 gap-5 mt-[5px] sm:justify-between justify-around" />
+              <button
+                type="button"
+                aria-label="Search"
+                className="text-foreground hover:text-[#666] transition-colors min-[468px]:block hidden"
+              >
+                <img src="/assets/icons/search.svg" alt="Search" className="h-5 w-5" />
+              </button>
 
-          <button
-            type="button"
-            aria-label="Search"
-            className="text-foreground hover:text-[#666] transition-colors"
-          >
-            <Search size={20} strokeWidth={1.5} />
-          </button>
-
-          <button
-            type="button"
-            className="text-sm text-foreground hover:text-[#666] transition-colors md:text-xs"
-          >
-            EN
-          </button>
+              <button
+                type="button"
+                className='text-[12px] font-bold leading-normal text-black transition-colors hover:text-[#666] min-[468px]:block hidden'
+                 style={{ fontFamily: 'Geeza Pro' }}
+              >
+                E/V
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>

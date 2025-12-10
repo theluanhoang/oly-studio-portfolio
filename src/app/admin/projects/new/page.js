@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import TiptapEditor from '@/components/admin/TiptapEditor';
 import GalleryUpload from '@/components/admin/GalleryUpload';
 import FormField from '@/components/forms/FormField';
-import { AdminHeader, PageHeader, StepIndicator } from '@/components/layout';
+import { Header, PageHeader, StepIndicator } from '@/components/layout';
 import { Button } from '@/components/ui';
 import { useGalleryUpload } from '@/hooks/useGalleryUpload';
 import { projectSchema } from '@/lib/validations/projectSchema';
@@ -153,7 +153,7 @@ export default function NewProjectPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <AdminHeader />
+      <Header isFixed={true} />
 
       <div className="max-w-5xl mx-auto py-12 px-8 md:px-4">
         <PageHeader

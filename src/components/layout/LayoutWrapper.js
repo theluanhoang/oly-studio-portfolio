@@ -9,9 +9,10 @@ export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
   const isProjectsPage = pathname === "/projects";
+  const isAdminLoginPage = pathname === "/admin/login";
   const headerHeight = useHeaderHeight();
 
-  if (isHomePage) {
+  if (isHomePage || isAdminLoginPage) {
     return <>{children}</>;
   }
   
