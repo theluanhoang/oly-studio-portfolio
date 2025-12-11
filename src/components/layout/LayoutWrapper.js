@@ -20,9 +20,11 @@ export default function LayoutWrapper({ children }) {
     <>
       <Header isFixed={true} />
       {isProjectsPage ? (
-        children
+        <div className="wrapper">
+          {children}
+        </div>
       ) : (
-        <div style={{ paddingTop: `${headerHeight}px` }}>
+        <div className="wrapper" style={{ paddingTop: `${headerHeight}px` }}>
           {children}
         </div>
       )}

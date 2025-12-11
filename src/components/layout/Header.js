@@ -21,8 +21,8 @@ export default function Header({ isFixed = false }) {
   };
   
   return (
-    <header className={`w-full bg-background shadow-md min-[468px]:pl-[30px] min-[468px]:pr-[71px] pl-4 pr-4 ${positionClasses}`}>
-      <div className="w-full h-12 flex items-center justify-between">
+    <header className={`bg-background shadow-md ${positionClasses}`}>
+      <div className="wrapper h-12 flex items-center min-[394px]:justify-between justify-around">
         <div className="flex items-center min-[1366px]:w-1/2 w-auto">
           <Link href={"/"} noBaseStyles className="flex items-center">
             <img
@@ -33,7 +33,7 @@ export default function Header({ isFixed = false }) {
           </Link>
         </div>
 
-        <div className="flex items-center min-[1366px]:w-1/2 md:w-2/3 min-[468px]:w-5/6 w-auto justify-between">
+        <div className="flex items-center min-[468px]:w-5/6 min-[1072px]:w-1/2 min-[844px]:w-2/3 w-auto justify-between">
           {isAdminPage ? (
             <nav className="flex items-center gap-8">
               <Link href="/projects" className="text-[12px] font-normal leading-normal text-black">

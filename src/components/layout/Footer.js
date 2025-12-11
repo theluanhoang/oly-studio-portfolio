@@ -1,59 +1,155 @@
-import Link from '@/components/ui/Link';
+import { useResponsive } from "@/hooks/useResponsive";
+import { Button } from "../ui";
 
 export default function Footer({ isFixed = false }) {
-  const positionClasses = isFixed 
-    ? "fixed bottom-0 left-0 right-0 z-10" 
+  const positionClasses = isFixed
+    ? "fixed bottom-0 left-0 right-0 z-10"
     : "relative z-10";
-  
+  const { isSm } = useResponsive();
   return (
-    <footer className={`${positionClasses} bg-background py-8 px-5 shadow-md`}>
-      <div className="max-w-7xl mx-auto">
-        {/* Top Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 pb-8 border-b border-gray-300">
-          {/* Left - Contact Info */}
-          <div className="text-foreground">
-            <p className="text-sm mb-2">
-              With Oily Studio you&apos;ll get the touch you are looking for, drop us a line.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 text-sm">
-              <a 
-                href="mailto:info@oilystudio.vn" 
-                className="text-foreground hover:text-gray-600 transition-colors underline"
+    <footer className={`${positionClasses} bg-background`}>
+      <div className="wrapper flex items-start justify-between py-10! min-[468px]:pr-10! pr-[6px]!">
+        {isSm ? (
+          <div className="flex items-start justify-between gap-[10px] w-full">
+            <div className="flex flex-col gap-[9px]">
+              <p className="text-black min-[843px]:text-[18px] text-[12px] font-bold leading-normal tracking-[2.52px]">
+                With Oly Studio you&apos;ll get the touch you are looking for,
+                drop us a line.
+              </p>
+              <div className="flex min-[747px]:flex-row flex-col min-[747px]:items-center items-start min-[747px]:gap-[77px] gap-[9px]">
+                <p
+                  className="text-black min-[843px]:text-[18px] text-[12px] font-bold leading-normal tracking-[2.52px] underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  info@olystudio.vn
+                </p>
+                <p
+                  className="text-black min-[843px]:text-[18px] text-[12px] font-bold leading-normal tracking-[2.52px] underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Hotline: 0900 000 000
+                </p>
+              </div>
+            </div>
+            <Button
+              className="min-[1455px]:block hidden px-[10px]! pt-[5px]! pb-0! gap-[10px] border-[0.5px] border-black bg-white text-black! text-center font-['Gayathri'] text-[10px] font-normal leading-[20px] tracking-[1.4px] uppercase hover:bg-white"
+              style={{ leadingTrim: "both", textEdge: "cap" }}
+            >
+              Contact for consultation
+            </Button>
+            <div className="flex flex-col gap-[10px]">
+              <div className="flex items-center justify-between">
+                <p
+                  className="cursor-pointer text-black text-[12px] font-bold leading-normal hover:underline active:underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Address
+                </p>
+                <p
+                  className="cursor-pointer text-black text-[12px] font-bold leading-normal hover:underline active:underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Office
+                </p>
+                <p
+                  className="cursor-pointer text-black text-[12px] font-bold leading-normal hover:underline active:underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Facebook
+                </p>
+                <p
+                  className="cursor-pointer text-black text-[12px] font-bold leading-normal hover:underline active:underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Instagram
+                </p>
+              </div>
+              <p className="text-black text-[14px] font-normal leading-normal">
+                Office: 193/9P Dien Bien Phu, W 15, Binh Thanh, TP HCM
+              </p>
+              <Button
+                className="min-[1455px]:hidden block w-[208px] px-[10px]! pt-[5px]! pb-0! gap-[10px] border-[0.5px] border-black bg-white text-black! text-center font-['Gayathri'] text-[10px] font-normal leading-[20px] tracking-[1.4px] uppercase hover:bg-white"
+                style={{ leadingTrim: "both", textEdge: "cap" }}
               >
-                info@oilystudio.vn
-              </a>
-              <span className="hidden sm:inline text-gray-400">|</span>
-              <a 
-                href="tel:0900000000" 
-                className="text-foreground hover:text-gray-600 transition-colors"
-              >
-                Hotline: 0900 000 000
-              </a>
+                Contact for consultation
+              </Button>
             </div>
           </div>
-
-          {/* Right - Contact Button */}
-          <button className="px-6 py-2 border border-black text-black text-sm hover:bg-black hover:text-white transition-all whitespace-nowrap">
-            CONTACT FOR CONSULTATION
-          </button>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-foreground text-xs">
-          {/* Address */}
-          <div className="flex flex-wrap gap-2 md:gap-4">
-            <span>Address:</span>
-            <span>Office</span>
-            <span>Facebook</span>
-            <span>Instagram</span>
+        ) : (
+          <div className="flex flex-col gap-[65px]">
+            <div className="flex flex-col gap-[12px]">
+              <div className="flex items-center justify-between min-[393px]:gap-6 gap-3">
+                <p
+                  className="cursor-pointer text-black text-[12px] font-bold leading-normal hover:underline active:underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Address
+                </p>
+                <p
+                  className="cursor-pointer text-black text-[12px] font-bold leading-normal hover:underline active:underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Office
+                </p>
+                <p
+                  className="cursor-pointer text-black text-[12px] font-bold leading-normal hover:underline active:underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Hotline
+                </p>
+                <p
+                  className="cursor-pointer text-black text-[12px] font-bold leading-normal hover:underline active:underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Facebook
+                </p>
+                <p
+                  className="cursor-pointer text-black text-[12px] font-bold leading-normal hover:underline active:underline decoration-skip-ink-none"
+                  style={{ textUnderlinePosition: "from-font" }}
+                >
+                  Instagram
+                </p>
+              </div>
+              <p className="text-black min-[843px]:text-[18px] text-[12px] font-bold leading-normal tracking-[2.52px]">
+                With Oly Studio you&apos;ll get the touch you are looking for,
+                drop us a line.
+              </p>
+            </div>
+            <div className="flex flex-col gap-[12px]">
+              <p className="text-black text-[14px] font-normal leading-normal">
+                Office: 193/9P Dien Bien Phu, W 15, Binh Thanh, TP HCM
+              </p>
+              <div className="flex items-end justify-between">
+                <div className="flex flex-col gap-[12px]">
+                  <p
+                    className="text-black min-[843px]:text-[18px] text-[12px] font-bold leading-normal tracking-[2.52px] underline decoration-skip-ink-none"
+                    style={{ textUnderlinePosition: "from-font" }}
+                  >
+                    info@olystudio.vn
+                  </p>
+                  <p
+                    className="text-black min-[843px]:text-[18px] text-[12px] font-bold leading-normal tracking-[2.52px] underline decoration-skip-ink-none"
+                    style={{ textUnderlinePosition: "from-font" }}
+                  >
+                    Hotline: 0900 000 000
+                  </p>
+                  <Button
+                  className="min-[390px]:hidden block min-[464px]:w-[208px] w-auto min-[464px]:px-[10px]! px-1! pt-[5px]! pb-0! gap-[10px] border-[0.5px] border-black bg-white text-black! text-center font-['Gayathri'] text-[10px] font-normal leading-[20px] tracking-[1.4px] uppercase hover:bg-white"
+                  style={{ leadingTrim: "both", textEdge: "cap" }}
+                >
+                  Contact for consultation
+                </Button>
+                </div>
+                <Button
+                  className="min-[390px]:block hidden min-[464px]:w-[208px] w-auto min-[464px]:px-[10px]! px-1! pt-[5px]! pb-0! gap-[10px] border-[0.5px] border-black bg-white text-black! text-center font-['Gayathri'] text-[10px] font-normal leading-[20px] tracking-[1.4px] uppercase hover:bg-white"
+                  style={{ leadingTrim: "both", textEdge: "cap" }}
+                >
+                  Contact for consultation
+                </Button>
+              </div>
+            </div>
           </div>
-
-          {/* Location Details */}
-          <div className="text-gray-600">
-            <p>Office: 90/18*Tân Định Phú, W.16 (NH Thanh)</p>
-            <p>TP.HCM</p>
-          </div>
-        </div>
+        )}
       </div>
     </footer>
   );

@@ -37,6 +37,18 @@ body {
   color: var(--foreground);
 }
 
+.wrapper {
+  max-width: 1512px;
+  padding: 0 16px;
+  margin: 0 auto;
+}
+
+@media (min-width: 640) {
+  .wrapper {
+    padding: 0 42px;
+  }
+}
+
 html {
   overflow-x: hidden;
 }
