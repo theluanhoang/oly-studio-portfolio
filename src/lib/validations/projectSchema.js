@@ -11,9 +11,13 @@ export const projectSchema = z.object({
     .max(200, 'Slug không được vượt quá 200 ký tự')
     .regex(/^[a-z0-9-]+$/, 'Slug chỉ được chứa chữ thường, số và dấu gạch ngang'),
   category: z
+    .enum(['Architecture', 'Interior & Construction'], {
+      errorMap: () => ({ message: 'Vui lòng chọn thể loại' }),
+    }),
+  type: z
     .string()
-    .min(1, 'Thể loại là bắt buộc')
-    .max(100, 'Thể loại không được vượt quá 100 ký tự'),
+    .max(100, 'Thể loại phụ không được vượt quá 100 ký tự')
+    .optional(),
   location: z
     .string()
     .min(1, 'Địa điểm là bắt buộc')

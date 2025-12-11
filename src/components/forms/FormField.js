@@ -2,6 +2,7 @@
 
 import { useFormContext } from 'react-hook-form';
 import Input from './Input';
+import Select from './Select';
 
 export default function FormField({
   name,
@@ -10,6 +11,7 @@ export default function FormField({
   placeholder,
   required = false,
   className = '',
+  options,
   ...props
 }) {
   const {
@@ -18,6 +20,22 @@ export default function FormField({
   } = useFormContext();
 
   const error = errors[name]?.message;
+
+  if (type === 'select' || options) {
+    return (
+      <Select
+        label={label}
+        name={name}
+        placeholder={placeholder}
+        required={required}
+        error={error}
+        className={className}
+        options={options || []}
+        {...register(name)}
+        {...props}
+      />
+    );
+  }
 
   return (
     <Input

@@ -17,7 +17,7 @@ export function useHorizontalScroll() {
     }
 
     function calculateTotalWidth() {
-      const sections = gallery.querySelectorAll('.section');
+      const sections = gallery.querySelectorAll('.project-gallery-section');
       if (sections.length === 0) return 0;
       
       const sectionWidth = sections[0].offsetWidth || 610;
@@ -27,8 +27,26 @@ export function useHorizontalScroll() {
 
     function updateSpacerHeight() {
       const totalWidth = calculateTotalWidth();
-      if (totalWidth > 0) {
+      if (totalWidth === 0) {
+        spacer.style.height = '100vh';
+        return;
+      }
+      
+      const wrapper = gallery.parentElement;
+      if (!wrapper) {
         spacer.style.height = `${totalWidth}px`;
+        return;
+      }
+      
+      const wrapperWidth = wrapper.offsetWidth;
+      const availableWidth = wrapperWidth;
+      
+      const scrollDistance = totalWidth - availableWidth;
+      
+      if (scrollDistance > 0) {
+        spacer.style.height = `${scrollDistance + window.innerHeight}px`;
+      } else {
+        spacer.style.height = '100vh';
       }
     }
 
@@ -44,8 +62,17 @@ export function useHorizontalScroll() {
       const scrolled = window.pageYOffset || window.scrollY;
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       const scrollPercentage = maxScroll > 0 ? scrolled / maxScroll : 0;
-      const maxTranslate = -(totalWidth - window.innerWidth + 100);
-      const translateX = maxTranslate * scrollPercentage;
+      
+      const wrapper = gallery.parentElement;
+      if (!wrapper) {
+        ticking = false;
+        return;
+      }
+      
+      const wrapperWidth = wrapper.offsetWidth;
+      const availableWidth = wrapperWidth;
+      const maxTranslate = -(totalWidth - availableWidth);
+      const translateX = Math.max(maxTranslate, Math.min(0, maxTranslate * scrollPercentage));
 
       gallery.style.transform = `translateX(${translateX}px)`;
       ticking = false;

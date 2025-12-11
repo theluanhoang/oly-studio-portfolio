@@ -16,6 +16,7 @@ model Project {
   slug      String   @unique
   title     String
   category  String
+  type      String?  @default("")
   location  String
   area      String
   year      String

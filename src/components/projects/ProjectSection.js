@@ -19,7 +19,7 @@ export default function ProjectSection({ images, sectionIndex }) {
 
   return (
     <div
-      className="section w-[610px] h-[610px] relative grid grid-cols-5 grid-rows-5 gap-[10px] shrink-0 md:w-[90vw] md:h-[90vw] md:max-w-[610px] md:max-h-[610px]"
+      className="project-gallery-section w-full h-full aspect-square md:w-[calc((100%-10px)/2)] md:h-[calc((100%-10px)/2)] lg:w-[calc((100%-20px)/3)] lg:h-[calc((100%-20px)/3)] max-w-[calc((1512px-84px-20px)/3)] max-h-[calc((1512px-84px-20px)/3)] min-w-0 relative grid grid-cols-5 grid-rows-5 md:gap-[10px] gap-[5px] shrink-0"
     >
       {images.map((image, imageIndex) => (
         <ProjectImage
@@ -28,6 +28,9 @@ export default function ProjectSection({ images, sectionIndex }) {
           alt={image.alt}
           gridPosition={getGridPosition(isLayout1, imageIndex)}
           slug={image.slug}
+          title={image.title}
+          category={image.category}
+          isPlaceholder={image.isPlaceholder || false}
         />
       ))}
     </div>

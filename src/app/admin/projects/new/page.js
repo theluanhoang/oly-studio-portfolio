@@ -23,6 +23,7 @@ export default function NewProjectPage() {
       title: '',
       slug: '',
       category: '',
+      type: '',
       location: '',
       area: '',
       year: '',
@@ -36,7 +37,37 @@ export default function NewProjectPage() {
   const content = watch('content');
   const title = watch('title');
   const slug = watch('slug');
+  const category = watch('category');
   const previousTitleRef = useRef('');
+
+  const typeOptionsByCategory = {
+    'Architecture': [
+      { value: 'Nhà phố', label: 'Nhà phố' },
+      { value: 'Shophouse', label: 'Shophouse' },
+      { value: 'Biệt thự', label: 'Biệt thự' },
+      { value: 'Nhà vườn', label: 'Nhà vườn' },
+      { value: 'Resort', label: 'Resort' },
+      { value: 'Nhà nghỉ dưỡng', label: 'Nhà nghỉ dưỡng' },
+      { value: 'Cabin', label: 'Cabin' },
+      { value: 'Bungalow', label: 'Bungalow' },
+      { value: 'Nhà tre', label: 'Nhà tre' },
+      { value: 'Nhà cổ', label: 'Nhà cổ' },
+      { value: 'Nhà thông minh', label: 'Nhà thông minh' },
+      { value: 'Nhà nổi', label: 'Nhà nổi' },
+    ],
+    'Interior & Construction': [
+      { value: 'Căn hộ', label: 'Căn hộ' },
+      { value: 'Penthouse', label: 'Penthouse' },
+      { value: 'Không gian làm việc', label: 'Không gian làm việc' },
+      { value: 'Văn phòng', label: 'Văn phòng' },
+      { value: 'Showroom', label: 'Showroom' },
+      { value: 'Nhà hàng', label: 'Nhà hàng' },
+      { value: 'Khách sạn', label: 'Khách sạn' },
+      { value: 'Cửa hàng', label: 'Cửa hàng' },
+    ],
+  };
+
+  const typeOptions = category ? (typeOptionsByCategory[category] || []) : [];
 
   const gallery = useGalleryUpload({
     onUploadSuccess: (urls) => {
@@ -60,6 +91,12 @@ export default function NewProjectPage() {
       previousTitleRef.current = title;
     }
   }, [title, setValue, watch]);
+
+  useEffect(() => {
+    if (!category) {
+      setValue('type', '', { shouldValidate: false });
+    }
+  }, [category, setValue]);
 
   const handleContentChange = (newContent) => {
     setValue('content', newContent, { shouldValidate: false });
@@ -90,6 +127,7 @@ export default function NewProjectPage() {
         slug: data.slug || generateSlug(data.title),
         title: data.title,
         category: data.category,
+        type: data.type && data.type.trim() ? data.type.trim() : '',
         location: data.location,
         area: data.area,
         year: data.year,
@@ -130,6 +168,7 @@ export default function NewProjectPage() {
         title: '',
         slug: '',
         category: '',
+        type: '',
         location: '',
         area: '',
         year: '',
@@ -194,8 +233,24 @@ export default function NewProjectPage() {
                       <FormField
                         name="category"
                         label="Thể loại"
-                        placeholder="Nhà phố"
+                        type="select"
+                        placeholder="Chọn thể loại"
                         required
+                        options={[
+                          { value: 'Architecture', label: 'Architecture' },
+                          { value: 'Interior & Construction', label: 'Interior & Construction' },
+                        ]}
+                      />
+                    </div>
+
+                    <div>
+                      <FormField
+                        name="type"
+                        label="Thể loại phụ"
+                        type="select"
+                        placeholder={category ? "Chọn thể loại phụ" : "Vui lòng chọn thể loại trước"}
+                        options={typeOptions}
+                        disabled={!category}
                       />
                     </div>
 

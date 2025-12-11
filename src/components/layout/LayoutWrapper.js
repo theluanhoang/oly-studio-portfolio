@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useHeaderHeight } from "@/hooks/useHeaderHeight";
+import { useResponsive } from "@/hooks/useResponsive";
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -11,10 +12,13 @@ export default function LayoutWrapper({ children }) {
   const isProjectsPage = pathname === "/projects";
   const isAdminLoginPage = pathname === "/admin/login";
   const headerHeight = useHeaderHeight();
+  const { isMobile } = useResponsive();
 
   if (isHomePage || isAdminLoginPage) {
     return <>{children}</>;
   }
+  
+  const shouldFixFooter = isProjectsPage && !isMobile;
   
   return (
     <>
@@ -28,7 +32,7 @@ export default function LayoutWrapper({ children }) {
           {children}
         </div>
       )}
-      <Footer isFixed={isProjectsPage} />
+      <Footer isFixed={shouldFixFooter} />
     </>
   );
 }

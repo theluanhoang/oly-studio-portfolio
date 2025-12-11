@@ -10,7 +10,8 @@ const projects = [
   {
     slug: 'narrow-house',
     title: 'NARROW HOUSE',
-    category: 'Nhà phố',
+    category: 'Architecture',
+    type: 'Nhà phố',
     location: 'TP. Hồ Chí Minh',
     area: '58 m²',
     year: '2018',
@@ -21,7 +22,8 @@ const projects = [
   {
     slug: 'minimalist-villa',
     title: 'MINIMALIST VILLA',
-    category: 'Biệt thự',
+    category: 'Architecture',
+    type: 'Biệt thự',
     location: 'Đà Lạt',
     area: '350 m²',
     year: '2019',
@@ -32,7 +34,8 @@ const projects = [
   {
     slug: 'urban-loft',
     title: 'URBAN LOFT',
-    category: 'Căn hộ',
+    category: 'Interior & Construction',
+    type: 'Căn hộ',
     location: 'Hà Nội',
     area: '120 m²',
     year: '2020',
@@ -43,7 +46,8 @@ const projects = [
   {
     slug: 'garden-house',
     title: 'GARDEN HOUSE',
-    category: 'Nhà vườn',
+    category: 'Architecture',
+    type: 'Nhà vườn',
     location: 'Cần Thơ',
     area: '280 m²',
     year: '2017',
@@ -54,7 +58,8 @@ const projects = [
   {
     slug: 'coastal-resort',
     title: 'COASTAL RESORT',
-    category: 'Resort',
+    category: 'Architecture',
+    type: 'Resort',
     location: 'Nha Trang',
     area: '500 m²',
     year: '2021',
@@ -65,7 +70,8 @@ const projects = [
   {
     slug: 'mountain-retreat',
     title: 'MOUNTAIN RETREAT',
-    category: 'Nhà nghỉ dưỡng',
+    category: 'Architecture',
+    type: 'Nhà nghỉ dưỡng',
     location: 'Sapa',
     area: '200 m²',
     year: '2019',
@@ -76,7 +82,8 @@ const projects = [
   {
     slug: 'modern-townhouse',
     title: 'MODERN TOWNHOUSE',
-    category: 'Nhà phố',
+    category: 'Architecture',
+    type: 'Nhà phố',
     location: 'Đà Nẵng',
     area: '180 m²',
     year: '2020',
@@ -87,7 +94,8 @@ const projects = [
   {
     slug: 'luxury-penthouse',
     title: 'LUXURY PENTHOUSE',
-    category: 'Căn hộ',
+    category: 'Interior & Construction',
+    type: 'Penthouse',
     location: 'TP. Hồ Chí Minh',
     area: '250 m²',
     year: '2022',
@@ -98,7 +106,8 @@ const projects = [
   {
     slug: 'eco-cabin',
     title: 'ECO CABIN',
-    category: 'Nhà gỗ',
+    category: 'Architecture',
+    type: 'Cabin',
     location: 'Mai Châu',
     area: '80 m²',
     year: '2018',
@@ -109,7 +118,8 @@ const projects = [
   {
     slug: 'industrial-warehouse',
     title: 'INDUSTRIAL WAREHOUSE',
-    category: 'Không gian làm việc',
+    category: 'Interior & Construction',
+    type: 'Không gian làm việc',
     location: 'TP. Hồ Chí Minh',
     area: '400 m²',
     year: '2021',
@@ -120,7 +130,8 @@ const projects = [
   {
     slug: 'tropical-bungalow',
     title: 'TROPICAL BUNGALOW',
-    category: 'Nhà nghỉ',
+    category: 'Architecture',
+    type: 'Bungalow',
     location: 'Phú Quốc',
     area: '150 m²',
     year: '2020',
@@ -131,7 +142,8 @@ const projects = [
   {
     slug: 'sky-villa',
     title: 'SKY VILLA',
-    category: 'Biệt thự',
+    category: 'Architecture',
+    type: 'Biệt thự',
     location: 'Hà Nội',
     area: '420 m²',
     year: '2022',
@@ -142,7 +154,8 @@ const projects = [
   {
     slug: 'bamboo-house',
     title: 'BAMBOO HOUSE',
-    category: 'Nhà tre',
+    category: 'Architecture',
+    type: 'Nhà tre',
     location: 'Hội An',
     area: '100 m²',
     year: '2019',
@@ -153,7 +166,8 @@ const projects = [
   {
     slug: 'waterfront-house',
     title: 'WATERFRONT HOUSE',
-    category: 'Nhà phố',
+    category: 'Architecture',
+    type: 'Nhà phố',
     location: 'Cần Thơ',
     area: '220 m²',
     year: '2021',
@@ -164,7 +178,8 @@ const projects = [
   {
     slug: 'zen-apartment',
     title: 'ZEN APARTMENT',
-    category: 'Căn hộ',
+    category: 'Interior & Construction',
+    type: 'Căn hộ',
     location: 'Đà Lạt',
     area: '95 m²',
     year: '2020',
@@ -175,7 +190,8 @@ const projects = [
   {
     slug: 'heritage-renovation',
     title: 'HERITAGE RENOVATION',
-    category: 'Nhà cổ',
+    category: 'Architecture',
+    type: 'Nhà cổ',
     location: 'Hà Nội',
     area: '180 m²',
     year: '2018',
@@ -186,7 +202,8 @@ const projects = [
   {
     slug: 'smart-home',
     title: 'SMART HOME',
-    category: 'Nhà thông minh',
+    category: 'Architecture',
+    type: 'Nhà thông minh',
     location: 'TP. Hồ Chí Minh',
     area: '300 m²',
     year: '2022',
@@ -197,7 +214,8 @@ const projects = [
   {
     slug: 'floating-house',
     title: 'FLOATING HOUSE',
-    category: 'Nhà nổi',
+    category: 'Architecture',
+    type: 'Nhà nổi',
     location: 'Cà Mau',
     area: '160 m²',
     year: '2021',

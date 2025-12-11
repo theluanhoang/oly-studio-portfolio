@@ -38,7 +38,8 @@ export async function POST(request) {
       data: {
         slug: projectData.slug,
         title: projectData.title,
-        category: projectData.category || '',
+        category: projectData.category,
+        type: projectData.type && projectData.type.trim() ? projectData.type.trim() : '',
         location: projectData.location || '',
         area: projectData.area || '',
         year: projectData.year || '',
