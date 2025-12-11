@@ -17,6 +17,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.0.0",
+    "@tailwindcss/postcss": "^4",
     "@tiptap/extension-color": "^3.10.4",
     "@tiptap/extension-font-family": "^3.10.4",
     "@tiptap/extension-image": "^3.10.4",
@@ -34,13 +35,12 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.68.0",
+    "tailwindcss": "^4",
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
-    "prisma": "^6.0.0",
-    "tailwindcss": "^4"
+    "prisma": "^6.0.0"
   }
 }
