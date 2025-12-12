@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@prisma/client": "^6.0.0",
+    "@prisma/client": "6.0.0",
     "@tailwindcss/postcss": "^4",
     "@tiptap/extension-color": "^3.10.4",
     "@tiptap/extension-font-family": "^3.10.4",
@@ -41,6 +41,6 @@
   "devDependencies": {
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
-    "prisma": "^6.0.0"
+    "prisma": "6.0.0"
   }
 }
